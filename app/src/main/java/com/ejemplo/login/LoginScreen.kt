@@ -33,8 +33,8 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<String?>(null) }
-    var passwordError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<Int?>(null) }
+    var passwordError by remember { mutableStateOf<Int?>(null) }
     var showPassword by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
@@ -47,7 +47,7 @@ fun LoginScreen(
     fun validarEmail(): Boolean {
         val emailValido = email.isNotBlank() &&
                 Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
-        emailError = if (!emailValido) "Introduce un email válido" else null
+        emailError = if (!emailValido) R.string.error_email else null
         return emailValido
     }
 
@@ -55,7 +55,7 @@ fun LoginScreen(
         val regex = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$".toRegex()
         val passValida = regex.matches(password)
         passwordError = if (!passValida) {
-            "Mínimo 8 caracteres, una mayúscula y un número"
+            R.string.error_password
         } else null
         return passValida
     }
@@ -104,7 +104,9 @@ fun LoginScreen(
             },
             label = { Text(stringResource(R.string.hint_email)) },
             isError = emailError != null,
-            supportingText = emailError?.let { { Text(it) } },
+            supportingText = emailError?.let {
+                { Text(stringResource(it)) }
+            },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -129,7 +131,9 @@ fun LoginScreen(
             },
             label = { Text(stringResource(R.string.hint_password)) },
             isError = passwordError != null,
-            supportingText = passwordError?.let { { Text(it) } },
+            supportingText = passwordError?.let {
+                { Text(stringResource(it)) }
+            },
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -139,7 +143,7 @@ fun LoginScreen(
                 IconButton(onClick = { showPassword = !showPassword }) {
                     Icon(
                         imageVector = Icons.Filled.Lock,
-                        contentDescription = "Mostrar/ocultar contraseña"
+                        contentDescription = stringResource(R.string.toggle_password)
                     )
                 }
             },
