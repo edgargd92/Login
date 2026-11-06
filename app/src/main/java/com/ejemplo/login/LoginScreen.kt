@@ -29,12 +29,15 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit
+    onLoginSuccess: (String) -> Unit,
+    onGoToRegister: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var emailError by remember { mutableStateOf<Int?>(null) }
-    var passwordError by remember { mutableStateOf<Int?>(null) }
+    var confirmPassword by remember { mutableStateOf("") }
+    var confirmPasswordError by remember { mutableStateOf<String?>(null) }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
     var showPassword by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
@@ -47,7 +50,7 @@ fun LoginScreen(
     fun validarEmail(): Boolean {
         val emailValido = email.isNotBlank() &&
                 Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
-        emailError = if (!emailValido) R.string.error_email else null
+        emailError = if (!emailValido) "Introduce un email válido" else null
         return emailValido
     }
 
@@ -55,11 +58,23 @@ fun LoginScreen(
         val regex = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$".toRegex()
         val passValida = regex.matches(password)
         passwordError = if (!passValida) {
-            R.string.error_password
+            "Mínimo 8 caracteres, una mayúscula y un número"
         } else null
         return passValida
     }
-    val formularioValido by remember(email, password) {
+    fun validarConfirmPassword(): Boolean {
+        val coincide = confirmPassword.isNotEmpty() &&
+                password == confirmPassword
+
+        confirmPasswordError = if (!coincide) {
+            "Las contraseñas no coinciden"
+        } else {
+            null
+        }
+
+        return coincide
+    }
+    val formularioValido by remember(email, password, confirmPassword) {
         derivedStateOf {
             val emailValido = email.isNotBlank() &&
                     Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
@@ -67,7 +82,10 @@ fun LoginScreen(
             val regex = "^(?=.*[A-Z])(?=.*[0-9]).{8,}$".toRegex()
             val passwordValida = regex.matches(password)
 
-            emailValido && passwordValida
+            val confirmacionValida = confirmPassword.isNotEmpty() &&
+                    password == confirmPassword
+
+            emailValido && passwordValida && confirmacionValida
         }
     }
 
@@ -104,9 +122,7 @@ fun LoginScreen(
             },
             label = { Text(stringResource(R.string.hint_email)) },
             isError = emailError != null,
-            supportingText = emailError?.let {
-                { Text(stringResource(it)) }
-            },
+            supportingText = emailError?.let { { Text(it) } },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next
@@ -131,9 +147,7 @@ fun LoginScreen(
             },
             label = { Text(stringResource(R.string.hint_password)) },
             isError = passwordError != null,
-            supportingText = passwordError?.let {
-                { Text(stringResource(it)) }
-            },
+            supportingText = passwordError?.let { { Text(it) } },
             visualTransformation = if (showPassword) {
                 VisualTransformation.None
             } else {
@@ -143,7 +157,7 @@ fun LoginScreen(
                 IconButton(onClick = { showPassword = !showPassword }) {
                     Icon(
                         imageVector = Icons.Filled.Lock,
-                        contentDescription = stringResource(R.string.toggle_password)
+                        contentDescription = "Mostrar/ocultar contraseña"
                     )
                 }
             },
@@ -180,13 +194,18 @@ fun LoginScreen(
                 val passOk = validarPassword()
                 if (emailOk && passOk) {
                     focusManager.clearFocus()
-                    onLoginSuccess()
+                    onLoginSuccess(email.trim())   // Pasamos el email
                 }
             },
-            enabled = formularioValido,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(stringResource(R.string.boton_entrar))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(onClick = onGoToRegister) {
+            Text(stringResource(R.string.ya_tienes_cuenta))
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -203,6 +222,6 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     MaterialTheme {
-        LoginScreen(onLoginSuccess = {})
+        LoginScreen(onLoginSuccess = { _ -> }, onGoToRegister = {})
     }
 }
